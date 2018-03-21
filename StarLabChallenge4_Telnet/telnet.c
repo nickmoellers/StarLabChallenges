@@ -1,8 +1,11 @@
 /* 
- * tcpserver.c - A simple TCP echo server 
+ * telnet.c - A simple TCP server, login and echo
  * author: nicholas moellers
- * usage: gcc tcpserver.c && ./a.out
- * source: https://www.google.com/url?sa=t&rct=j&q=&esrc=s&source=web&cd=1&cad=rja&uact=8&ved=0ahUKEwi8rZ77v-rZAhVOxWMKHebdBuMQFggnMAA&url=https%3A%2F%2Fwww.cs.cmu.edu%2Fafs%2Fcs%2Facademic%2Fclass%2F15213-f99%2Fwww%2Fclass26%2Ftcpclient.c&usg=AOvVaw2guohV-5yGoaKmxciKegiD
+ * usage: make all && make test
+ * then add a username
+ * then add a password
+ * then if you log in, it will echo text back to you
+ * Starter code from: https://www.cs.cmu.edu/afs/cs/academic/class/15213-f99/www/class26/tcpclient.c&usg=AOvVaw2guohV-5yGoaKmxciKegiD
  */
 
 #include <stdio.h>
@@ -217,7 +220,7 @@ int main(int argc, char **argv) {
     //check results and publish to client
     if( login == 1) {
       // Ask for password
-      prompt = "Login successful!\n";
+      prompt = "Login successful!\nEchoing:\n";
     } else {
       if( id == -1 ) {
         prompt = "Login unsuccessful: incorrect username,\n";
@@ -229,22 +232,26 @@ int main(int argc, char **argv) {
     if (n < 0) 
       error("ERROR writing to socket");
 
-    //int length(prompt)
-    while( strcmp( echobuf , "close\n" ) ) {
-      // Wait for message
-      bzero(echobuf, BUFSIZE);
-      n = read(childfd, echobuf, BUFSIZE);
-      if (n < 0) 
-        error("ERROR reading from socket");
+    if( login == 1 ) {
+      while( strcmp( echobuf , "close\n" ) ) {
 
-      echobuf[n-2]='\n';
-      echobuf[n-1]='\0';
-      
-      printf("User typed:\t%s\n", echobuf );
-      n = write(childfd, echobuf, strlen(echobuf));
-      if (n < 0) 
-        error("ERROR writing to socket");
+        // Wait for message
+        bzero(echobuf, BUFSIZE);
+        n = read(childfd, echobuf, BUFSIZE);
+        if (n < 0) 
+          error("ERROR reading from socket");
+
+        echobuf[n-2]='\n';
+        echobuf[n-1]='\0';
+        
+        //Echo message
+        printf("User typed:\t%s\n", echobuf );
+        n = write(childfd, echobuf, strlen(echobuf));
+        if (n < 0) 
+          error("ERROR writing to socket");
+      }
     }
+
     //close connection
     close(childfd);
   
