@@ -29,14 +29,16 @@ MODULE_VERSION("0.1");            ///< A version number to inform users
 
 static int    majorNumber;                  ///< Stores the device number -- determined automatically
 //static char   message[256] = {0};           ///< Memory for the string that is passed from userspace
-static               ///< Used to remember the size of the string stored
+//static               ///< Used to remember the size of the string stored
 static int    numberOpens = 0;              ///< Counts the number of times the device is opened
 static struct class*  fibClass  = NULL; ///< The device-driver class struct pointer
 static struct device* fibDevice = NULL; ///< The device-driver device struct pointer
 
 //My vars
 static unsigned int * fibonacciArray;
-static unsigned int fibonacciArrayLength=0;
+//static unsigned int * fibonacciArrayOffset; 
+static loff_t fibonacciArrayLength=0;
+static loff_t fibonacciArrayN=0;
 
 static void freeFibonacci( void );
 static void calcFibonacci( unsigned int );
@@ -46,6 +48,8 @@ static unsigned int fibonacci( unsigned int );
 static int     dev_open(struct inode *, struct file *);
 static int     dev_release(struct inode *, struct file *);
 static ssize_t dev_read(struct file *, char *, size_t, loff_t *);
+static loff_t dev_llseek(struct file *, loff_t , int );
+
 //static ssize_t dev_write(struct file *, const char *, size_t, loff_t *);
 
 /** @brief Devices are represented as file structure in the kernel. The file_operations structure from
@@ -58,6 +62,7 @@ static struct file_operations fops =
    .read = dev_read,
    //.write = dev_write,
    .release = dev_release,
+   .llseek = dev_llseek,
 };
 
 void freeFibonacci() {
@@ -178,19 +183,18 @@ static int dev_open(struct inode *inodep, struct file *filep){
  *  send the buffer string to the user and captures any errors.
  *  @param filep A pointer to a file object (defined in linux/fs.h)
  *  @param buffer The pointer to the buffer to which this function writes the data
- *  @param len The length of the b
+ *  @param len Ignored 
  *  @param offset The offset if required
  */
-//This needs fixed - right now, len is being interpretted as the n, actually I should be using lseek to change the offset
 static ssize_t dev_read(struct file *filep, char *buffer, size_t len, loff_t *offset){
    int error_count = 0;
    unsigned int fibonacci_of_n = -1;
-   unsigned int n = len;
+   //unsigned int n = len;
    short  size_of_message;
 
    printk( KERN_NOTICE "Fib: in dev_read()" );
 
-   fibonacci_of_n = fibonacci(n);
+   fibonacci_of_n = fibonacci(fibonacciArrayN);
    size_of_message = sizeof(int)/sizeof(char);
    printk( KERN_NOTICE "Fib: copying : %d to %p of size %d\n",
       fibonacci_of_n, &buffer, size_of_message );
@@ -206,6 +210,25 @@ static ssize_t dev_read(struct file *filep, char *buffer, size_t len, loff_t *of
       printk(KERN_INFO "Fib: Failed to send %d to the user\n", fibonacci_of_n);
       return -EFAULT;              // Failed -- return a bad address message (i.e. -14)
    }
+}
+
+static loff_t dev_llseek(struct file *filep, loff_t offset, int type ){
+
+   printk( KERN_NOTICE "Fib: in dev_llseek()" );
+   switch( type ) {
+      case SEEK_SET:
+         fibonacciArrayN = offset;
+         break;
+      case SEEK_CUR:
+         fibonacciArrayN += offset;
+         break;
+      default:
+         printk(KERN_ALERT "Fib: Seek type %d not supported.\n", type);
+         return -1;
+   }
+
+   printk(KERN_INFO "Fib: Seeked to fibonacci of %lld.\n", offset);
+   return fibonacciArrayN;
 }
 
 //unneeded

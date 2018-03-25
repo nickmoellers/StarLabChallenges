@@ -15,6 +15,7 @@
 #include <string.h>
 #include <unistd.h>
 #include <time.h> 
+#include <sys/types.h>
 
 static unsigned int fibonacci_of_n;
 static unsigned int n;
@@ -30,7 +31,7 @@ void printIthFibonacci(unsigned int i, unsigned int fib_of_i) {
 }
 
 int main(){
-   int ret, fd, n;
+   int fd, n;
 
    printf("Openning device...");
    fd = open("/dev/fib", O_RDONLY);             // Open the device in readonly mode
@@ -43,8 +44,13 @@ int main(){
 
    printf("Testing one number...");
    n = 3;
-   ret = read(fd, &fibonacci_of_n, n);        // Read the response from the LKM
-   if (ret < 0){
+   if( (lseek( fd, n, SEEK_SET)) < 0 ) {
+      perror("lseek error.\n");
+      return errno;
+   }
+            
+   //ret = read(fd, &fibonacci_of_n, 0);        // Read the response from the LKM
+   if ((read(fd, &fibonacci_of_n, 0)) < 0){
       perror("Failed to read the message from the device.\n");
       return errno;
    } else {
@@ -52,27 +58,43 @@ int main(){
    }
    printIthFibonacci(n, fibonacci_of_n);
 
-
    srand((unsigned int)time(NULL));
    printf("Randomly test 10 fibanacci numbers:\n");
    for( n = 0 ; n < 10 ; n++ ) {
       unsigned int randn = rand() % 50;
-      ret = read(fd, &fibonacci_of_n, randn);        // Read the response from the LKM
-      if (ret < 0){
+
+      if( (lseek( fd, randn, SEEK_SET)) < 0 ) {
+         perror("lseek error.\n");
+         return errno;
+      }
+
+      if ((read(fd, &fibonacci_of_n, 0)) < 0){
          perror("Failed to read the message from the device.\n");
          return errno;
       }
       printIthFibonacci(randn, fibonacci_of_n); //printf("fibonacci[%u] = %u\n", randn, r);
    }
 
-   printf("Sequentially test numbers 1 through 50:\n");
-   for( n = 0 ; n <= 50 ; n++ ) {
-      ret = read(fd, &fibonacci_of_n, n);        // Read the response from the LKM
-      if (ret < 0){
+   printf("Sequentially test numbers 1 through 50 using SEEK_CUR:\n");
+   n = 0;
+   if( (lseek( fd, n, SEEK_SET)) < 0 ) {
+      perror("lseek error.\n");
+      return errno;
+   }
+
+   while( fibonacci_of_n < -1 ) {
+
+      if ( (read(fd, &fibonacci_of_n, 0)) < 0){
          perror("Failed to read the message from the device.\n");
          return errno;
       }
-      printIthFibonacci(n, fibonacci_of_n);
+
+      printIthFibonacci(n++, fibonacci_of_n);
+
+      if( (lseek( fd, 1, SEEK_CUR)) < 0 ) {
+         perror("lseek error.\n");
+         return errno;
+      }
    }
 
    printf("End of the program\n");
