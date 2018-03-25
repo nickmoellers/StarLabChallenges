@@ -17,9 +17,6 @@
 #include <time.h> 
 #include <sys/types.h>
 
-static unsigned int fibonacci_of_n;
-static unsigned int n;
-
 void printIthFibonacci(unsigned int i, unsigned int fib_of_i) {
    printf("fibonacci[%d] = ", i);
    if( fib_of_i == -1) {
@@ -31,6 +28,9 @@ void printIthFibonacci(unsigned int i, unsigned int fib_of_i) {
 }
 
 int main(){
+   unsigned int fibonacci_of_n;
+   loff_t n;
+
    int fd;
 
    printf("Openning device...");

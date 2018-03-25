@@ -90,6 +90,10 @@ void calcFibonacci( unsigned int n ) {
       //fibonacciArray = (unsigned int*) realloc( fibonacciArray, fibonacciArrayLengthRequired*sizeof(int));
    }
 
+   if( fibonacciArray == NULL ) {
+      fibonacciArrayLength = 0;
+      return ;
+   }
 
    //Fill the array
    for( i = fibonacciArrayLength; i < fibonacciArrayLengthRequired ; i ++ ) {
