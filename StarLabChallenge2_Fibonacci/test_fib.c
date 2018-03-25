@@ -31,7 +31,7 @@ void printIthFibonacci(unsigned int i, unsigned int fib_of_i) {
 }
 
 int main(){
-   int fd, n;
+   int fd;
 
    printf("Openning device...");
    fd = open("/dev/fib", O_RDONLY);             // Open the device in readonly mode

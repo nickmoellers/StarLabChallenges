@@ -2,7 +2,7 @@ obj-m+=fib.o
  
 all:
 	make -C /lib/modules/$(shell uname -r)/build/ M=$(PWD) modules
-	$(CC) test_fib.c -o test_fib.o
+	$(CC) -Wall test_fib.c -o test_fib.o
 
 clean:
 	make -C /lib/modules/$(shell uname -r)/build/ M=$(PWD) clean
